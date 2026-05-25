@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Asistencia - Portal Docente</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; color: #333; }
+        .container { max-width: 1000px; margin: 20px auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h2, h3 { text-align: center; color: #1a73e8; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .grid-input { width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #1a73e8; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button:hover { background-color: #1557b0; }
+        .table-responsive { overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
+        th { background-color: #f8f9fa; color: #5f6368; }
+        .hidden { display: none; }
+        .logout-btn { background-color: #dc3545; margin-top: 15px; }
+        .logout-btn:hover { background-color: #bd2130; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="login-section">
+        <h2>Portal de Asistencia Docente</h2>
+        <p style="text-align:center; color:#666;">Ingrese sus credenciales de acceso</p>
+        <input type="text" id="usuario" placeholder="Correo electrónico / Usuario">
+        <input type="password" id="password" placeholder="Contraseña">
+        <button onclick="login()">Iniciar Sesión</button>
+    </div>
+
+    <div id="portal-section" class="hidden">
+        <h2>Bienvenido(a), <span id="nombre-maestro"></span></h2>
+        <h3>Bitácora de Clases Asignadas</h3>
+        
+        <div class="table-responsive">
+            <table id="tabla-asistencia">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Materia</th>
+                        <th>Grupo</th>
+                        <th>Tema</th>
+                        <th>Asistencia</th>
+                        <th>Test</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-cuerpo">
+                    </tbody>
+            </table>
+        </div>
+        
+        <button style="margin-top:20px; background-color: #28a745;" onclick="guardarCambios()">Guardar Todos los Cambios</button>
+        <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+    </div>
+</div>
+
+<script>
+    // 🔴 REEMPLAZA ESTO CON TU URL DE EMISIÓN DE APPS SCRIPT
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwhzA4NbjRlRJRirMWEMtbRJlcafEn0zEsvhjJ_eaakX8lNQz3gCJjDJHUA8DPHhF3Wcg/exec"; 
+    
+    let registrosActuales = [];
+
+    function login() {
+        const u = document.getElementById("usuario").value;
+        const p = document.getElementById("password").value;
+
+        if(!u || !p) return alert("Por favor llene todos los campos.");
+
+        fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({ action: "login", usuario: u, password: p })
+        })
+        .then(res => res.json())
+        .then(res => {
+            if(res.success) {
+                registrosActuales = res.registros;
+                document.getElementById("nombre-maestro").innerText = res.maestro;
+                renderTabla(res.registros);
+                document.getElementById("login-section").classList.add("hidden");
+                document.getElementById("portal-section").classList.remove("hidden");
+            } else {
+                alert(res.message);
+            }
+        })
+        .catch(err => alert("Error de conexión: " + err));
+    }
+
+    function renderTabla(registros) {
+        const cuerpo = document.getElementById("tabla-cuerpo");
+        cuerpo.innerHTML = "";
+
+        if(registros.length === 0) {
+            cuerpo.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tienes clases asignadas en este periodo.</td></tr>`;
+            return;
+        }
+
+        registros.forEach((reg, index) => {
+            let fechaFormateada = reg.fecha;
+            if(typeof reg.fecha === "string" && reg.fecha.includes("T")) {
+                fechaFormateada = reg.fecha.split("T")[0];
+            }
+
+            cuerpo.innerHTML += `
+                <tr>
+                    <td><b>${fechaFormateada}</b></td>
+                    <td>${reg.materia}</td>
+                    <td><span style="background:#e8f0fe; padding:3px 8px; border-radius:4px;">${reg.grupo}</span></td>
+                    <td>
+                        <input type="text" class="grid-input" value="${reg.tema}" onchange="actualizarDatoLocal(${index}, 'tema', this.value)" placeholder="Tema visto">
+                    </td>
+                    <td>
+                        <input type="text" class="grid-input" value="${reg.asistencia}" onchange="actualizarDatoLocal(${index}, 'asistencia', this.value)" placeholder="Alumnos presentes">
+                    </td>
+                    <td>
+                        <input type="text" class="grid-input" value="${reg.test}" onchange="actualizarDatoLocal(${index}, 'test', this.value)" placeholder="Resultado / Parámetro">
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function actualizarDatoLocal(index, campo, valor) {
+        registrosActuales[index][campo] = valor;
+    }
+
+    function guardarCambios() {
+        fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({ action: "update", cambios: registrosActuales })
+        })
+        .then(res => res.json())
+        .then(res => {
+            if(res.success) {
+                alert("¡Excelente! Cambios guardados en la hoja central.");
+            } else {
+                alert("Error al guardar: " + res.error);
+            }
+        });
+    }
+
+    function logout() {
+        registrosActuales = [];
+        document.getElementById("usuario").value = "";
+        document.getElementById("password").value = "";
+        document.getElementById("login-section").classList.remove("hidden");
+        document.getElementById("portal-section").classList.add("hidden");
+    }
+</script>
+</body>
+</html>
