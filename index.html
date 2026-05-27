@@ -124,7 +124,7 @@
                     
                     <td>
                         <select class="grid-input" onchange="actualizarDatoLocal(${index}, 'asistencia', this.value)">
-                            <option value="" ${!reg.asistencia ? 'selected' : ''}>-</option>
+                            <option value="" ${!reg.asistencia ? 'selected' : ''}></option>
                             <option value="si" ${reg.asistencia === 'si' ? 'selected' : ''}>si</option>
                             <option value="No" ${reg.asistencia === 'No' ? 'selected' : ''}>No</option>
                         </select>
