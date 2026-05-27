@@ -6,14 +6,15 @@
     <title>Docente</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; color: #333; }
-        .container { max-width: 1000px; margin: 20px auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .container { max-width: 1100px; margin: 20px auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         h2, h3 { text-align: center; color: #1a73e8; }
         input[type="text"], input[type="password"] { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
         .grid-input { width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        select.grid-input { cursor: pointer; background-color: #fff; }
         button { width: 100%; padding: 12px; background-color: #1a73e8; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px; }
         button:hover { background-color: #1557b0; }
         .table-responsive { overflow-x: auto; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
         th { background-color: #f8f9fa; color: #5f6368; }
         .hidden { display: none; }
@@ -44,6 +45,8 @@
                         <th>Topic</th>
                         <th>Group</th>
                         <th>BookUnit</th>
+                        <th>Enrollment</th>
+                        <th>Student's Name</th>
                         <th>Attendance</th>
                         <th>Test</th>
                     </tr>
@@ -59,7 +62,7 @@
 </div>
 
 <script>
-    // 🔴 REEMPLAZA ESTO CON TU URL DE EMISIÓN DE APPS SCRIPT
+    // URL DE EMISIÓN DE APPS SCRIPT
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwhzA4NbjRlRJRirMWEMtbRJlcafEn0zEsvhjJ_eaakX8lNQz3gCJjDJHUA8DPHhF3Wcg/exec"; 
     
     let registrosActuales = [];
@@ -94,7 +97,8 @@
         cuerpo.innerHTML = "";
 
         if(registros.length === 0) {
-            cuerpo.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tienes clases asignadas en este periodo.</td></tr>`;
+            // Ajustamos el colspan a 8 porque ahora hay más columnas
+            cuerpo.innerHTML = `<tr><td colspan="8" style="text-align:center;">No tienes clases asignadas en este periodo.</td></tr>`;
             return;
         }
 
@@ -109,14 +113,25 @@
                     <td><b>${fechaFormateada}</b></td>
                     <td>${reg.materia}</td>
                     <td><span style="background:#e8f0fe; padding:3px 8px; border-radius:4px;">${reg.grupo}</span></td>
+                    
                     <td>
-                        <input type="text" class="grid-input" value="${reg.tema}" onchange="actualizarDatoLocal(${index}, 'tema', this.value)" placeholder="Topic">
+                        <input type="text" class="grid-input" value="${reg.tema || ''}" onchange="actualizarDatoLocal(${index}, 'tema', this.value)" placeholder="Topic">
                     </td>
+                    
+                    <td>${reg.enrollmentNumber || '-'}</td>
+                    
+                    <td><strong>${reg.studentName || '-'}</strong></td>
+                    
                     <td>
-                        <input type="text" class="grid-input" value="${reg.asistencia}" onchange="actualizarDatoLocal(${index}, 'asistencia', this.value)" placeholder="Students">
+                        <select class="grid-input" onchange="actualizarDatoLocal(${index}, 'asistencia', this.value)">
+                            <option value="" ${!reg.asistencia ? 'selected' : ''}>-</option>
+                            <option value="si" ${reg.asistencia === 'si' ? 'selected' : ''}>si</option>
+                            <option value="No" ${reg.asistencia === 'No' ? 'selected' : ''}>No</option>
+                        </select>
                     </td>
+                    
                     <td>
-                        <input type="text" class="grid-input" value="${reg.test}" onchange="actualizarDatoLocal(${index}, 'test', this.value)" placeholder="Grade">
+                        <input type="text" class="grid-input" value="${reg.test || ''}" onchange="actualizarDatoLocal(${index}, 'test', this.value)" placeholder="Grade">
                     </td>
                 </tr>
             `;
@@ -139,7 +154,8 @@
             } else {
                 alert("Error al guardar: " + res.error);
             }
-        });
+        })
+        .catch(err => alert("Error de conexión: " + err));
     }
 
     function logout() {
