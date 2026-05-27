@@ -123,12 +123,12 @@
                     <td><strong>${reg.studentName || '-'}</strong></td>
                     
                     <td>
-                        <select class="grid-input" onchange="actualizarDatoLocal(${index}, 'asistencia', this.value)">
-                            <option value="" ${!reg.asistencia ? 'selected' : ''}></option>
-                            <option value="si" ${reg.asistencia === 'si' ? 'selected' : ''}>si</option>
-                            <option value="No" ${reg.asistencia === 'No' ? 'selected' : ''}>No</option>
-                        </select>
-                    </td>
+                    <select class="grid-input" onchange="actualizarDatoLocal(${index}, 'asistencia', this.value)">
+                        <option value="" ${!reg.asistencia ? 'selected' : ''}></option>
+                        <option value="present" ${reg.asistencia === 'present' ? 'selected' : ''}>present</option>
+                        <option value="absent" ${reg.asistencia === 'absent' ? 'selected' : ''}>absent</option>
+                    </select>
+                   </td>
                     
                     <td>
                         <input type="text" class="grid-input" value="${reg.test || ''}" onchange="actualizarDatoLocal(${index}, 'test', this.value)" placeholder="Grade">
